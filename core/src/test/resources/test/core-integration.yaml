@@ -1,0 +1,39 @@
+groupName: core
+requests:
+  - id: topup_request
+    name: top-up - success
+    endpoint: /api/transactions/top-up
+    method: POST
+    payload: '{"memberId":"0BJHA40BYE9W7", "amount":10000, "referenceId":"20230201", "additionalInfo": {"source": "Bank"}}'
+    assertion:
+      httpStatus: OK
+      fields:
+        $.success: true
+        $.message: OK
+        $.data.topUp.amount: 10000
+  - id: withdraw_request
+    name: withdraw - success
+    endpoint: /api/transactions/cash-out
+    method: POST
+    payload: '{"memberId":"0BJHA40BYE9W7", "amount":10000}'
+    assertion:
+      httpStatus: OK
+      fields:
+        $.success: true
+        $.message: OK
+        $.data.balances.cashOut.amount: 10000
+        $.data.balances.topUp.amount: 0
+  - id: transactions inquiry
+    name: transactions - success
+    endpoint: /api/transactions/0BJHA40BYE9W7
+    method: GET
+    assertion:
+      httpStatus: OK
+      fields:
+        $.success: true
+        $.message: OK
+        $.data.transactions[0].amount: 10000
+        $.data.transactions[0].type: CASH_OUT
+        $.data.transactions[1].amount: 10000
+        $.data.transactions[1].type: TOP_UP
+

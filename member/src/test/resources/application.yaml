@@ -1,0 +1,47 @@
+test.rest:
+  enable: true
+  baseUrl: http://localhost:8000
+  defaultHeaders:
+    Content-Type:
+      - application/json
+    Accept:
+      - application/json
+spring:
+  application:
+    name: member-app
+  r2dbc:
+    url: r2dbc:h2:mem:///memberdb
+    initialization-mode:
+    username: 'sa'
+    password: ''
+# logging
+logging:
+  level:
+    com.nantaaditya.framework.redis: DEBUG
+
+# command
+command:
+  cache:
+    configurations:
+      getMemberCommandImpl: 60s
+    enable: true
+  interceptor:
+    configurations:
+      getMemberCommandImpl:
+        - beanName: commandCacheInterceptor
+          action: AFTER_SUCCESS
+# rest
+rest-log:
+  enable: true
+  masked:
+    headers:
+      - User-Agent
+    payloads:
+      - email
+    responses:
+      - email
+  ignored-paths:
+    GET:
+      - /webjars/**
+server:
+  port: 8000

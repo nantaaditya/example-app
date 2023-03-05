@@ -1,0 +1,28 @@
+server:
+  port: 8001
+spring:
+  application:
+    name: core-app
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/local_db
+    username: 'user'
+    password: 'password'
+# logging
+logging:
+  level:
+    com.nantaaditya.framework.redis: DEBUG
+    com.nantaaditya.framework.helper: INFO
+#    io.r2dbc.postgresql.QUERY: DEBUG
+#    io.r2dbc.postgresql.PARAM: DEBUG
+
+# rest
+rest-log:
+  enable: true
+  masked:
+    payloads:
+      - email
+    responses:
+      - email
+  ignored-paths:
+    GET:
+      - /webjars/**

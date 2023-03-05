@@ -1,0 +1,34 @@
+groupName: member
+chainingResponses:
+  create_member:
+    - $.data.member.id
+requests:
+  - id: create_member
+    name: create member - success
+    endpoint: /api/members
+    method: POST
+    payload: '{"email":"user@mail.com", "phoneNumber":"081234567890", "name":"user"}'
+    assertion:
+      httpStatus: OK
+      fields:
+        $.success: true
+        $.message: OK
+  - id: get_member
+    name: get member - success
+    order: 2
+    endpoint: /api/members/{{create_member-data.member.id}}
+    method: GET
+    assertion:
+      httpStatus: OK
+      fields:
+        $.success: true
+        $.message: OK
+  - id: get_member_not_exist
+    name: get member - user not exist
+    endpoint: /api/members/1
+    method: GET
+    assertion:
+      httpStatus: BAD_REQUEST
+      fields:
+        $.success: false
+        $.message: Bad Request
