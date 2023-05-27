@@ -31,3 +31,10 @@ test.rest:
       - application/json
     Accept:
       - application/json
+
+idempotent-check:
+  configurations:
+    TopUpRequest:
+      idempotentFields:
+        - $.memberId
+        - $.referenceId

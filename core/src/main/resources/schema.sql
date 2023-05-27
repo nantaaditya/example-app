@@ -50,8 +50,17 @@ CREATE TABLE IF NOT EXISTS transactions (
     metadata jsonb
 );
 
+CREATE TABLE IF NOT EXISTS idempotent_data (
+    id VARCHAR PRIMARY KEY,
+    client VARCHAR,
+    category VARCHAR,
+    key TEXT,
+    value TEXT,
+    created_time BIGINT
+);
 
 CREATE UNIQUE INDEX IF NOT EXISTS members_emailOrPhoneNumber_idx ON members(email, phone_number);
 CREATE INDEX IF NOT EXISTS balances_typeAndMemberId_idx ON balances(type, member_id);
 CREATE UNIQUE INDEX IF NOT EXISTS transactions_typeAndReferenceId_idx ON transactions(type, reference_id);
 CREATE INDEX IF NOT EXISTS transactions_memberIdAndType_idx ON transactions(member_id, type);
+CREATE INDEX IF NOT EXISTS idempotentData_key_idx ON idempotent_data(key);

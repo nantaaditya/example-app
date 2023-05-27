@@ -15,11 +15,18 @@ import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.request.TopUpRequest;
 import com.example.app.shared.response.TopUpResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
+import com.nantaaditya.framework.helper.bus.ReactorEventBus;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
+import com.nantaaditya.framework.helper.idempotent.IdempotentCheckExecutor;
+import com.nantaaditya.framework.helper.json.JsonHelper;
+import com.nantaaditya.framework.helper.model.IdempotentRecord;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -37,14 +44,41 @@ public class TopUpCommandImpl implements TopUpCommand {
 
   private final TransactionalOperator transactionalOperator;
 
+  private final IdempotentCheckExecutor idempotentCheckExecutor;
+
+  private final JsonHelper jsonHelper;
+
+  private final ReactorEventBus reactorEventBus;
+
+  private final Sinks.Many<IdempotentRecord> idempotentRecordEvents;
+
+  private Map<String, String> idempotentRequest = new HashMap<>();
+
   @Override
   public Mono<TopUpResponse> execute(TopUpRequest request) {
+    return idempotentCheckExecutor.check("internal", request)
+        .doOnNext(idempotentRecord -> {
+          idempotentRequest.clear();
+          idempotentRequest.putAll(idempotentRecord.request());
+        })
+        .filter(idempotentRecord -> idempotentRecord.idempotent())
+        .map(idempotentRecord -> {
+          TopUpResponse response = jsonHelper.fromJson(idempotentRecord.result(), TopUpResponse.class);
+          response.setIdempotent(true);
+          return response;
+        })
+        .switchIfEmpty(executeTopUp(request));
+
+  }
+
+  private Mono<TopUpResponse> executeTopUp(TopUpRequest request) {
     return memberRepository.findById(request.getMemberId())
         .flatMap(member -> balanceRepository.findByTypeAndMemberId(BalanceType.TOPUP_BALANCE, member.getId())
             .map(balance -> Tuples.of(member, balance))
         )
         .flatMap(tuples -> saveTransaction(request, tuples.getT1(), tuples.getT2()))
-        .map(tuples -> toTopUpResponse(request, tuples.getT1(), tuples.getT2()));
+        .map(tuples -> toTopUpResponse(request, tuples.getT1(), tuples.getT2()))
+        .doOnSuccess(response -> reactorEventBus.publish(idempotentRecordEvents, toIdempotentRecord(response)));
   }
 
   private Mono<Tuple2<Member, Balance>> saveTransaction(TopUpRequest request,Member member,
@@ -100,5 +134,17 @@ public class TopUpCommandImpl implements TopUpCommand {
         .email(member.getEmail())
         .topUp(balanceResponse)
         .build();
+  }
+
+  private IdempotentRecord toIdempotentRecord(TopUpResponse topUpResponse) {
+    return new IdempotentRecord(
+        IdentifierGenerator.generateId(),
+        false,
+        "internal",
+        "topup",
+        idempotentRequest,
+        jsonHelper.toJson(topUpResponse),
+        System.currentTimeMillis()
+    );
   }
 }

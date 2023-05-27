@@ -26,3 +26,11 @@ rest-log:
   ignored-paths:
     GET:
       - /webjars/**
+
+# idempotent checker
+idempotent-check:
+  configurations:
+    TopUpRequest:
+      idempotentFields:
+        - $.memberId
+        - $.referenceId

@@ -28,7 +28,7 @@
   <properties>
     <java.version>17</java.version>
     <spring-cloud.version>2021.0.4</spring-cloud.version>
-    <nanta-fw.version>0.0.2</nanta-fw.version>
+    <nanta-fw.version>0.0.3-SNAPSHOT</nanta-fw.version>
     <tsid.version>5.0.2</tsid.version>
     <openapi.version>1.6.8</openapi.version>
     <testcontainer.version>1.17.6</testcontainer.version>

@@ -5,7 +5,6 @@ import com.example.app.core.entity.BalanceHistory;
 import com.example.app.core.entity.BalanceHistory.BalanceAction;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
-import com.example.app.core.repository.MemberRepository;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
@@ -23,12 +22,9 @@ import reactor.util.function.Tuples;
 
 @Slf4j
 @Configuration
-public class CoreConfiguration {
+public class WithdrawListenerConfiguration {
 
   private static final int SINKS_SIZE = 100;
-
-  @Autowired
-  private MemberRepository memberRepository;
 
   @Autowired
   private BalanceRepository balanceRepository;
