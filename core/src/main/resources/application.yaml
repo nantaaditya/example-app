@@ -4,7 +4,8 @@ spring:
   application:
     name: core-app
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/local_db
+    url: r2dbc:postgresql://host.docker.internal:5432/local_db
+#    url: r2dbc:postgresql://localhost:5432/local_db
     username: 'user'
     password: 'password'
 # logging
@@ -12,6 +13,8 @@ logging:
   level:
     com.nantaaditya.framework.redis: DEBUG
     com.nantaaditya.framework.helper: INFO
+  file:
+    name: logs/core.log
 #    io.r2dbc.postgresql.QUERY: DEBUG
 #    io.r2dbc.postgresql.PARAM: DEBUG
 

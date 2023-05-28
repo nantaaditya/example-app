@@ -10,11 +10,13 @@ import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
 import com.example.app.core.repository.TransactionRepository;
+import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.request.TopUpRequest;
 import com.example.app.shared.response.TopUpResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
+import com.nantaaditya.framework.audit.model.request.AuditRequest;
 import com.nantaaditya.framework.helper.bus.ReactorEventBus;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
 import com.nantaaditya.framework.helper.idempotent.IdempotentCheckExecutor;
@@ -52,6 +54,8 @@ public class TopUpCommandImpl implements TopUpCommand {
 
   private final Sinks.Many<IdempotentRecord> idempotentRecordEvents;
 
+  private final BalanceAuditService balanceAuditService;
+
   private Map<String, String> idempotentRequest = new HashMap<>();
 
   @Override
@@ -85,7 +89,7 @@ public class TopUpCommandImpl implements TopUpCommand {
       Balance balance) {
 
     return Mono.zip(
-        balanceRepository.save(updateBalance(request, balance)),
+        saveBalanceAndAudit(request, balance),
         transactionRepository.save(toTransaction(request, member)),
         Tuples::of
     )
@@ -93,6 +97,16 @@ public class TopUpCommandImpl implements TopUpCommand {
             .map(balanceHistory -> Tuples.of(member, tuples.getT1()))
         )
         .as(transactionalOperator::transactional);
+  }
+
+  private Mono<Balance> saveBalanceAndAudit(TopUpRequest request, Balance balance) {
+    return balanceAuditService.save(new AuditRequest<>(
+        balance.getId(),
+        balance.getModifiedBy(),
+        balance.getModifiedTime(),
+        "topup",
+        updateBalance(request, balance))
+    );
   }
 
   private Balance updateBalance(TopUpRequest request, Balance balance) {

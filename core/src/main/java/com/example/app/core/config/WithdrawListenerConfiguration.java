@@ -5,9 +5,11 @@ import com.example.app.core.entity.BalanceHistory;
 import com.example.app.core.entity.BalanceHistory.BalanceAction;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
+import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
+import com.nantaaditya.framework.audit.model.request.AuditRequest;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,9 @@ public class WithdrawListenerConfiguration {
   @Autowired
   private BalanceHistoryRepository balanceHistoryRepository;
 
+  @Autowired
+  private BalanceAuditService balanceAuditService;
+
   @Bean
   public Sinks.Many<WithdrawEvent> withdrawEvents() {
     return Sinks.many().replay().all(SINKS_SIZE);
@@ -46,13 +51,23 @@ public class WithdrawListenerConfiguration {
             .map(balance -> Tuples.of(event, balance))
         )
         .flatMap(tuple -> Mono.zip(
-            balanceRepository.save(updateBalance(tuple.getT1(), tuple.getT2())),
+            saveBalanceAndAudit(tuple.getT1(), tuple.getT2()),
             balanceHistoryRepository.save(toBalanceHistory(tuple.getT1(), tuple.getT2()))
         ))
         .doOnNext(tuple ->
           log.info("withdraw balance {} & balance history", tuple.getT1(), tuple.getT2())
         )
         .subscribe();
+  }
+
+  private Mono<Balance> saveBalanceAndAudit(WithdrawEvent event, Balance balance) {
+    return balanceAuditService.save(new AuditRequest<>(
+        balance.getId(),
+        balance.getModifiedBy(),
+        balance.getModifiedTime(),
+        "withdraw",
+        updateBalance(event, balance)
+    ));
   }
 
   private Balance updateBalance(WithdrawEvent event, Balance balance) {

@@ -10,12 +10,14 @@ import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
 import com.example.app.core.repository.TransactionRepository;
+import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
 import com.example.app.shared.request.CashOutRequest;
 import com.example.app.shared.response.CashOutResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
+import com.nantaaditya.framework.audit.model.request.AuditRequest;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,8 @@ public class CashOutCommandImpl implements CashOutCommand {
   private final TransactionalOperator transactionalOperator;
 
   private final Sinks.Many<WithdrawEvent> withdrawEvents;
+
+  private final BalanceAuditService balanceAuditService;
 
   @Override
   public Mono<CashOutResponse> execute(CashOutRequest request) {
@@ -78,10 +82,20 @@ public class CashOutCommandImpl implements CashOutCommand {
   private Mono<Tuple3<Balance, Balance, Transaction>> saveBalancesAndTransaction(
       CashOutRequest request, Balance topUpBalance, Balance cashOutBalance, Member member) {
     return Mono.zip(
-        balanceRepository.save(updateBalance(request, topUpBalance, '-')),
-        balanceRepository.save(updateBalance(request, cashOutBalance, '+')),
+        saveBalanceAndAudit(request, topUpBalance, '-'),
+        saveBalanceAndAudit(request, cashOutBalance, '+'),
         transactionRepository.save(toTransaction(request, member))
     );
+  }
+
+  private Mono<Balance> saveBalanceAndAudit(CashOutRequest request, Balance balance, char operator) {
+    return balanceAuditService.save(new AuditRequest<>(
+        balance.getId(),
+        balance.getModifiedBy(),
+        balance.getModifiedTime(),
+        '+' == operator ? "topup" : "cashout",
+        updateBalance(request, balance, operator)
+    ));
   }
 
   private Mono<Tuple4<Member, Transaction, Balance, Balance>> saveBalanceHistories(

@@ -13,18 +13,20 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.ReactiveAuditorAware;
 import org.springframework.data.r2dbc.config.EnableR2dbcAuditing;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 @EnableR2dbcAuditing
 @Import({RestExceptionHandler.class})
-@ComponentScan("com.example.app.*")
+@EnableR2dbcRepositories(basePackages = {"com.nantaaditya.framework.audit", "com.example.app.core"})
+@ComponentScan(value = {"com.example.app.*"})
 @OpenAPIDefinition(info =
-@Info(
-    title = "core api doc",
-    contact = @Contact(name = "Nanta Aditya", url = "https://nantaaditya.com")
-)
+  @Info(
+      title = "core api doc",
+      contact = @Contact(name = "Nanta Aditya", url = "https://nantaaditya.com")
+  )
 )
 public class CoreApplication {
   public static void main(String[] args) {
