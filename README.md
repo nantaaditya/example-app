@@ -1,5 +1,5 @@
 ## How to run project
-- run docker compose to start postgresql and pgadmin instance
+- run docker compose to start `postgresql`, `pgadmin`, and `redis` instance
 ```shell
 docker compose up -d
 ```
@@ -13,6 +13,7 @@ password: password
 user: user@mail.com
 password: password
 ```
+
 - create db local_db
 ```sql
 CREATE DATABASE local_db;
@@ -21,13 +22,12 @@ CREATE DATABASE local_db;
 ```shell
 mvn clean install
 ```
-- run microservices
+
+- run microservices on docker
 ```shell
 # member microservice
-cd /member
-mvn spring-boot:run
+./member-deploy.sh
 
 # core microservice
-cd /core
-mvn spring-boot:run
+./core-deploy.sh
 ```
