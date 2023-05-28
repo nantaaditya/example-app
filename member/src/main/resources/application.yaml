@@ -1,12 +1,14 @@
-
+server:
+  port: 8000
 spring:
   redis:
-    host: localhost
+    host: host.docker.internal
     port: 6379
   application:
     name: member-app
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/local_db
+    url: r2dbc:postgresql://host.docker.internal:5432/local_db
+#    url: r2dbc:postgresql://localhost:5432/local_db
     username: 'user'
     password: 'password'
 # logging
@@ -14,6 +16,8 @@ logging:
   level:
     com.nantaaditya.framework.redis: DEBUG
     com.nantaaditya.framework.helper: INFO
+  file:
+    name: logs/member.log
 #    io.r2dbc.postgresql.QUERY: DEBUG
 #    io.r2dbc.postgresql.PARAM: DEBUG
 
@@ -42,5 +46,3 @@ rest-log:
   ignored-paths:
     GET:
       - /webjars/**
-server:
-  port: 8000
