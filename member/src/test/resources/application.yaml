@@ -17,6 +17,7 @@ spring:
 # logging
 logging:
   level:
+    com.nantaaditya.framework.test: DEBUG
     com.nantaaditya.framework.redis: DEBUG
 
 # command

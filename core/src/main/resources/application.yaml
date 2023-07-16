@@ -4,13 +4,14 @@ spring:
   application:
     name: core-app
   r2dbc:
-    url: r2dbc:postgresql://host.docker.internal:5432/local_db
-#    url: r2dbc:postgresql://localhost:5432/local_db
+#    url: r2dbc:postgresql://host.docker.internal:5432/local_db
+    url: r2dbc:postgresql://localhost:5432/local_db
     username: 'user'
     password: 'password'
 # logging
 logging:
   level:
+    com.nantaaditya.framework: DEBUG
     com.nantaaditya.framework.redis: DEBUG
     com.nantaaditya.framework.helper: INFO
   file:
@@ -29,6 +30,7 @@ rest-log:
   ignored-paths:
     GET:
       - /webjars/**
+      - /actuator/**
 
 # idempotent checker
 idempotent-check:
@@ -37,3 +39,14 @@ idempotent-check:
       idempotentFields:
         - $.memberId
         - $.referenceId
+
+management:
+  endpoint:
+    metrics.enabled: true
+  endpoints:
+    web:
+      exposure.include: '*'
+
+metrics:
+  timer:
+    slow-response-threshold: 1000
