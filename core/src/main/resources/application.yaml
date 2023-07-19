@@ -5,7 +5,7 @@ spring:
     name: core-app
   r2dbc:
 #    url: r2dbc:postgresql://host.docker.internal:5432/local_db
-    url: r2dbc:postgresql://localhost:5432/local_db
+    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/local_db}
     username: 'user'
     password: 'password'
 # logging
@@ -49,4 +49,4 @@ management:
 
 metrics:
   timer:
-    slow-response-threshold: 1000
+    slow-response-threshold: ${SLOW_RESPONSE_THRESHOLD:1000}

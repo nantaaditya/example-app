@@ -1,5 +1,6 @@
 version: "3.8"
 services:
+  # INFRASTRUCTURE
   redis:
     image: redis:alpine
     container_name: redis
@@ -7,7 +8,7 @@ services:
     ports:
       - "6379:6379"
   db:
-    image: postgres
+    image: postgres:alpine
     container_name: local_pgdb
     restart: always
     ports:
@@ -28,6 +29,59 @@ services:
       PGADMIN_DEFAULT_PASSWORD: password
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+
+  # APP SERVICE
+  member-service:
+    container_name: member-service
+    image: nantaaditya/member-app:0.0.1-SNAPSHOT
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - R2DBC_URL=r2dbc:postgresql://host.docker.internal:5432/local_db
+      - SLOW_RESPONSE_THRESHOLD=500
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+  core-service:
+    container_name: core-service
+    image: nantaaditya/core-app:0.0.1-SNAPSHOT
+    environment:
+      - R2DBC_URL=r2dbc:postgresql://host.docker.internal:5432/local_db
+      - SLOW_RESPONSE_THRESHOLD=500
+    depends_on:
+      - db
+      - member-service
+    ports:
+      - "8001:8001"
+
+  # MONITORING
+  prometheus:
+    image: bitnami/prometheus
+    container_name: prometheus
+    volumes:
+      - ./env/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    depends_on:
+      - core-service
+      - member-service
+#  loki:
+#    image: grafana/loki:2.8.2
+#    container_name: loki
+#    ports:
+#      - "3100:3100"
+#    command: -config.file=/etc/loki/local-config.yaml
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - prometheus
+      - core-service
+      - member-service
 
 volumes:
   local_pgdata:

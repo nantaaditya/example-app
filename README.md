@@ -18,16 +18,29 @@ password: password
 ```sql
 CREATE DATABASE local_db;
 ```
-- run mvn clean install
+- build member image
 ```shell
-mvn clean install
+#!/bin/sh
+imgname=member-app
+version=0.0.1-SNAPSHOT
+
+mvn package -DskipTests
+docker build -f ./member/Dockerfile -t nantaaditya/${imgname}:${version} .
 ```
 
-- run microservices on docker
+- build core image
 ```shell
-# member microservice
-./member-deploy.sh
+#!/bin/sh
+imgname=core-app
+version=0.0.1-SNAPSHOT
 
-# core microservice
-./core-deploy.sh
+mvn package -DskipTests
+docker build -f ./core/Dockerfile -t nantaaditya/${imgname}:${version} .
+```
+
+- run infrastructure & microservices on docker
+```shell
+# build member image
+# build core image
+docker compose up -d
 ```
