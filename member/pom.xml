@@ -27,6 +27,12 @@
       <artifactId>nanta-framework-test</artifactId>
       <version>${nanta-fw.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.github.loki4j</groupId>
+      <artifactId>loki-logback-appender</artifactId>
+      <version>${loki.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

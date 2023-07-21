@@ -27,6 +27,7 @@
 
   <properties>
     <java.version>17</java.version>
+    <loki.version>1.4.1</loki.version>
     <nanta-fw.version>0.0.3-SNAPSHOT</nanta-fw.version>
     <openapi.version>1.6.8</openapi.version>
     <spring-cloud.version>2021.0.4</spring-cloud.version>

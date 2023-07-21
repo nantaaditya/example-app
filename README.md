@@ -1,23 +1,4 @@
 ## How to run project
-- run docker compose to start `postgresql`, `pgadmin`, and `redis` instance
-```shell
-docker compose up -d
-```
--  postgresql credentials
-```text
-user: user
-password: password
-```
-- pgadmin credentials
-```text
-user: user@mail.com
-password: password
-```
-
-- create db local_db
-```sql
-CREATE DATABASE local_db;
-```
 - build member image
 ```shell
 #!/bin/sh
@@ -43,4 +24,12 @@ docker build -f ./core/Dockerfile -t nantaaditya/${imgname}:${version} .
 # build member image
 # build core image
 docker compose up -d
+
+# pgadmin credentials
+user: user@mail.com
+password: password
+
+# postgresql credentials
+user: user
+password: password
 ```
