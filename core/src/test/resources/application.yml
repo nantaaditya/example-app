@@ -1,6 +1,8 @@
 server:
   port: 8001
 spring:
+  profiles:
+    active: test
   application:
     name: core-app
   r2dbc:
@@ -38,3 +40,13 @@ idempotent-check:
       idempotentFields:
         - $.memberId
         - $.referenceId
+
+metrics:
+  timer:
+    slow-response-threshold: 1000
+
+schedulers.configurations:
+  changelog-schedulers:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      name: changelog-schedulers

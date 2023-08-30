@@ -40,6 +40,7 @@ idempotent-check:
         - $.memberId
         - $.referenceId
 
+# spring management
 management:
   endpoint:
     metrics.enabled: true
@@ -47,6 +48,14 @@ management:
     web:
       exposure.include: '*'
 
+# metrics module
 metrics:
   timer:
     slow-response-threshold: ${SLOW_RESPONSE_THRESHOLD:1000}
+
+# reactor schedulers
+schedulers.configurations:
+  changelog-schedulers:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      name: changelog-schedulers

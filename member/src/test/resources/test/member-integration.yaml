@@ -8,7 +8,7 @@ requests:
     name: create member - success
     endpoint: /api/members
     method: POST
-    payload: '{"email":"user@mail.com", "phoneNumber":"081234567890", "name":"user"}'
+    payload: '{"email":"user@mail.com", "phoneNumber":"081234567890", "name":"#f(user.fullName)"}'
     assertion:
       httpStatus: OK
       fields:

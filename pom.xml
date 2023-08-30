@@ -31,7 +31,7 @@
     <nanta-fw.version>0.0.3-SNAPSHOT</nanta-fw.version>
     <openapi.version>1.6.8</openapi.version>
     <spring-cloud.version>2021.0.4</spring-cloud.version>
-    <testcontainer.version>1.17.6</testcontainer.version>
+    <testcontainer.version>1.19.0</testcontainer.version>
     <tsid.version>5.0.2</tsid.version>
   </properties>
 

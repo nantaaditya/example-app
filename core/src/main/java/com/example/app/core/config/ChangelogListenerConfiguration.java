@@ -9,6 +9,7 @@ import com.nantaaditya.framework.helper.idempotent.IdempotentCheckStrategy;
 import com.nantaaditya.framework.helper.json.JsonHelper;
 import com.nantaaditya.framework.helper.model.IdempotentRecord;
 import com.nantaaditya.framework.helper.properties.IdempotentProperties;
+import com.nantaaditya.framework.reactor.api.SchedulerHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -35,6 +36,9 @@ public class ChangelogListenerConfiguration {
   @Autowired
   private IdempotentDataRepository idempotentDataRepository;
 
+  @Autowired
+  private SchedulerHelper schedulerHelper;
+
   @Bean
   public IdempotentCheckStrategy idempotentChecker(JsonHelper jsonHelper,
       IdempotentProperties idempotentProperties) {
@@ -53,7 +57,7 @@ public class ChangelogListenerConfiguration {
 
   @EventListener(ApplicationReadyEvent.class)
   public Disposable idempotentListener() {
-    Scheduler scheduler = Schedulers.newBoundedElastic(5, 10, "idempotentThread");
+    Scheduler scheduler = schedulerHelper.of("changelog-schedulers");
     return reactorEventBus.consume(idempotentRecordEvents(), scheduler)
         .map(this::toIdempotentData)
         .doOnNext(idempotentData -> log.info("idempotent data listener {}", idempotentData))
