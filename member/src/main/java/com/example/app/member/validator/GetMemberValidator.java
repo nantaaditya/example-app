@@ -4,7 +4,6 @@ import com.example.app.member.repository.MemberRepository;
 import com.example.app.shared.request.GetMemberRequest;
 import com.nantaaditya.framework.command.model.dto.CommandValidationResult;
 import com.nantaaditya.framework.command.validation.BusinessCommandValidator;
-import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +22,6 @@ public class GetMemberValidator implements BusinessCommandValidator<GetMemberReq
     return memberRepository.existsById(request.getId())
         .filter(BooleanUtils::isFalse)
         .doOnNext(result -> log.warn("#VALIDATOR - GetMemberValidator not passed"))
-        .map(result -> toResult());
-  }
-
-  private CommandValidationResult toResult() {
-    return new CommandValidationResult(
-        false,
-        Collections.singletonMap("member", Collections.singleton("NotExists")),
-        Collections.singletonMap("member", Collections.singletonMap("NotExists", Collections.singleton("member not exists")))
-    );
+        .map(result -> toError("member", "NotExists", "member not exists"));
   }
 }

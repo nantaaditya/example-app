@@ -6,7 +6,6 @@ import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.request.CashOutRequest;
 import com.nantaaditya.framework.command.model.dto.CommandValidationResult;
 import com.nantaaditya.framework.command.validation.BusinessCommandValidator;
-import java.util.Collections;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,15 +32,7 @@ public class WithdrawValidator implements BusinessCommandValidator<CashOutReques
     return memberRepository.existsById(request.getMemberId())
         .filter(BooleanUtils::isFalse)
         .doOnNext(result -> log.warn("#VALIDATOR - phone number not exists "))
-        .map(result -> toPhoneNumberNotExists());
-  }
-
-  private CommandValidationResult toPhoneNumberNotExists() {
-    return new CommandValidationResult(
-        false,
-        Collections.singletonMap("memberId", Collections.singleton("NotExists")),
-        Collections.singletonMap("memberId", Collections.singletonMap("NotExists", Collections.singleton("member not exists")))
-    );
+        .map(result -> toError("memberId", "NotExists", "member not exists"));
   }
 
   private Mono<CommandValidationResult> validaBalanceIsEnough(CashOutRequest request) {
@@ -50,14 +41,6 @@ public class WithdrawValidator implements BusinessCommandValidator<CashOutReques
         .filter(Objects::nonNull)
         .filter(balance -> balance.getAmount() - request.getAmount() < 0)
         .doOnNext(result -> log.warn("#VALIDATOR - balance not enough"))
-        .map(result -> toBalanceNotEnough());
-  }
-
-  private CommandValidationResult toBalanceNotEnough() {
-    return new CommandValidationResult(
-        false,
-        Collections.singletonMap("balance", Collections.singleton("NotEnough")),
-        Collections.singletonMap("balance", Collections.singletonMap("NotEnough", Collections.singleton("balance is not enough to withdraw")))
-    );
+        .map(result -> toError("balance", "NotEnough", "balance is not enough to withdraw"));
   }
 }
