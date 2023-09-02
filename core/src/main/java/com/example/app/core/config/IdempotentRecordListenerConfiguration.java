@@ -19,11 +19,10 @@ import org.springframework.context.event.EventListener;
 import reactor.core.Disposable;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @Configuration
-public class ChangelogListenerConfiguration {
+public class IdempotentRecordListenerConfiguration {
 
   private static final int SINKS_SIZE = 100;
 
