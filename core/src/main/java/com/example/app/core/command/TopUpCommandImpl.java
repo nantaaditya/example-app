@@ -16,19 +16,18 @@ import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.request.TopUpRequest;
 import com.example.app.shared.response.TopUpResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
+import com.nantaaditya.framework.audit.model.eventbus.IdempotentRecord;
 import com.nantaaditya.framework.audit.model.request.AuditRequest;
-import com.nantaaditya.framework.helper.bus.ReactorEventBus;
+import com.nantaaditya.framework.audit.service.IdempotentRecordPublisher;
+import com.nantaaditya.framework.audit.service.impl.IdempotentCheckExecutor;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
-import com.nantaaditya.framework.helper.idempotent.IdempotentCheckExecutor;
 import com.nantaaditya.framework.helper.json.JsonHelper;
-import com.nantaaditya.framework.helper.model.IdempotentRecord;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -50,9 +49,7 @@ public class TopUpCommandImpl implements TopUpCommand {
 
   private final JsonHelper jsonHelper;
 
-  private final ReactorEventBus reactorEventBus;
-
-  private final Sinks.Many<IdempotentRecord> idempotentRecordEvents;
+  private final IdempotentRecordPublisher idempotentRecordPublisher;
 
   private final BalanceAuditService balanceAuditService;
 
@@ -71,7 +68,7 @@ public class TopUpCommandImpl implements TopUpCommand {
           response.setIdempotent(true);
           return response;
         })
-        .switchIfEmpty(executeTopUp(request));
+        .switchIfEmpty(Mono.defer(() -> executeTopUp(request)));
 
   }
 
@@ -82,7 +79,7 @@ public class TopUpCommandImpl implements TopUpCommand {
         )
         .flatMap(tuples -> saveTransaction(request, tuples.getT1(), tuples.getT2()))
         .map(tuples -> toTopUpResponse(request, tuples.getT1(), tuples.getT2()))
-        .doOnSuccess(response -> reactorEventBus.publish(idempotentRecordEvents, toIdempotentRecord(response)));
+        .doOnSuccess(response -> idempotentRecordPublisher.publish(toIdempotentRecord(response)));
   }
 
   private Mono<Tuple2<Member, Balance>> saveTransaction(TopUpRequest request,Member member,

@@ -33,12 +33,13 @@ rest-log:
       - /actuator/**
 
 # idempotent checker
-idempotent-check:
+audit.idempotent-check:
   configurations:
     TopUpRequest:
       idempotentFields:
         - $.memberId
         - $.referenceId
+      checker: dbIdempotentChecker
 
 # spring management
 management:
