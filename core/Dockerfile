@@ -16,5 +16,12 @@ ADD core/target/dependency/*.jar app/lib/
 
 WORKDIR /app
 
+ARG IMAGE_NAME="core-app"
+ARG IMAGE_VERSION="0.0.1-SNAPSHOT"
+
+LABEL name=${IMAGE_NAME}
+LABEL version=${IMAGE_VERSION}
+LABEL creator=nantaaditya
+
 ENTRYPOINT [ "java","-cp",".:resources:patch/*:lib/*","com.example.app.core.CoreApplication" ]
 

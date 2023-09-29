@@ -1,6 +1,7 @@
 package com.example.app.member;
 
 import com.example.app.shared.configuration.DBInitialization;
+import com.nantaaditya.framework.rest.api.CacheController;
 import com.nantaaditya.framework.rest.handler.RestExceptionHandler;
 import io.r2dbc.spi.ConnectionFactory;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -18,7 +19,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 @EnableR2dbcAuditing
-@Import({RestExceptionHandler.class})
+@Import({RestExceptionHandler.class, CacheController.class})
 @ComponentScan("com.example.app.*")
 @OpenAPIDefinition(info =
   @Info(

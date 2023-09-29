@@ -21,6 +21,8 @@ logging:
   level:
     com.nantaaditya.framework.test: DEBUG
     com.nantaaditya.framework.redis: DEBUG
+    com.nantaaditya.framework.helper: INFO
+    com.nantaaditya.framework.kafka: DEBUG
 
 # command
 command:
@@ -48,3 +50,9 @@ rest-log:
       - /webjars/**
 server:
   port: 8000
+
+# kafka
+reactor:
+  kafka:
+    publisher:
+      host: http://localhost:9092

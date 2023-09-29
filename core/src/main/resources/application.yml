@@ -5,7 +5,7 @@ spring:
     name: core-app
   r2dbc:
 #    url: r2dbc:postgresql://host.docker.internal:5432/local_db
-    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/local_db}
+    url: ${R2DBC_URL:r2dbc:postgresql://host.docker.internal:5432/core_db}
     username: 'user'
     password: 'password'
 # logging
@@ -33,13 +33,12 @@ rest-log:
       - /actuator/**
 
 # idempotent checker
-audit.idempotent-check:
-  configurations:
-    TopUpRequest:
-      idempotentFields:
-        - $.memberId
-        - $.referenceId
-      checker: dbIdempotentChecker
+audit.idempotent-check.configurations:
+  TopUpRequest:
+    idempotentFields:
+      - $.memberId
+      - $.referenceId
+    checker: dbIdempotentChecker
 
 # spring management
 management:
