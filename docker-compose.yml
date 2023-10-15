@@ -37,7 +37,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - R2DBC_URL=r2dbc:postgresql://postgres:5432/member_db
+      - R2DBC_URL=r2dbc:postgresql://postgres:5432/local_db
       - SLOW_RESPONSE_THRESHOLD=500
     depends_on:
       - db
@@ -48,7 +48,7 @@ services:
     container_name: core-service
     image: nantaaditya/core-app:0.0.1-SNAPSHOT
     environment:
-      - R2DBC_URL=r2dbc:postgresql://postgres:5432/core_db
+      - R2DBC_URL=r2dbc:postgresql://postgres:5432/local_db
       - SLOW_RESPONSE_THRESHOLD=500
     depends_on:
       - db
