@@ -14,11 +14,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.ReactiveAuditorAware;
 import org.springframework.data.r2dbc.config.EnableR2dbcAuditing;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 @EnableR2dbcAuditing
+@EnableR2dbcRepositories(basePackages = "com.example.app.member.*")
 @Import({RestExceptionHandler.class, CacheController.class})
 @ComponentScan("com.example.app.*")
 @OpenAPIDefinition(info =
@@ -28,6 +30,8 @@ import reactor.core.publisher.Mono;
   )
 )
 public class MemberApplication {
+
+
   public static void main(String[] args) {
     SpringApplication.run(MemberApplication.class, args);
   }
@@ -42,4 +46,6 @@ public class MemberApplication {
   public ReactiveAuditorAware<String> auditorAware() {
     return () -> Mono.just("SYSTEM");
   }
+
+
 }

@@ -1,6 +1,8 @@
 server:
   port: 8000
 spring:
+  profiles:
+    active: ${SPRING_PROFILE:local}
   redis:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
@@ -8,7 +10,7 @@ spring:
     name: member-app
   r2dbc:
 #    url: r2dbc:postgresql://host.docker.internal:5432/local_db
-    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/local_db}
+    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/member_db}
     username: 'user'
     password: 'password'
 
@@ -63,3 +65,37 @@ rest-log:
 metrics:
   timer:
     slow-response-threshold: ${SLOW_RESPONSE_THRESHOLD:1000}
+
+# schedulers
+schedulers.configurations:
+  publisher-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      core-pool-size: 4
+      queue-size: 10
+      name: publisher-scheduler
+  subscriber-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      name: subscriber-scheduler
+      core-pool-size: 4
+      queue-size: 10
+
+# kafka
+reactor.kafka:
+  dbIdempotentFilterEnable: true
+  subscriber:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    groupId: core-app
+    schedulerConfiguration:
+      name: subscriber-scheduler
+    props:
+      "[auto.offset.reset]": latest
+  publisher:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    retry-configuration:
+      type: FIXED_DELAY
+    schedulerConfiguration:
+      name: publisher-scheduler
+      props:
+        acks: all

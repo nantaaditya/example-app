@@ -6,6 +6,7 @@ import com.example.app.core.entity.BalanceHistory.BalanceAction;
 import com.example.app.core.entity.Member;
 import com.example.app.core.entity.Transaction;
 import com.example.app.core.entity.Transaction.TransactionType;
+import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
@@ -53,6 +54,8 @@ public class TopUpCommandImpl implements TopUpCommand {
 
   private final BalanceAuditService balanceAuditService;
 
+  private final KafkaPublisher kafkaPublisher;
+
   private Map<String, String> idempotentRequest = new HashMap<>();
 
   @Override
@@ -93,7 +96,8 @@ public class TopUpCommandImpl implements TopUpCommand {
         .flatMap(tuples -> balanceHistoryRepository.save(toBalanceHistory(request, member, tuples.getT1(), tuples.getT2()))
             .map(balanceHistory -> Tuples.of(member, tuples.getT1()))
         )
-        .as(transactionalOperator::transactional);
+        .as(transactionalOperator::transactional)
+        .doOnSuccess(tuple -> kafkaPublisher.publishBalance(tuple.getT2()));
   }
 
   private Mono<Balance> saveBalanceAndAudit(TopUpRequest request, Balance balance) {

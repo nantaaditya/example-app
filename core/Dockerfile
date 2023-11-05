@@ -2,7 +2,6 @@ FROM azul/zulu-openjdk-alpine:17-jre
 
 ENV TZ=Asia/Jakarta
 
-
 RUN mkdir app
 RUN mkdir app/resources-patch
 RUN mkdir app/patch

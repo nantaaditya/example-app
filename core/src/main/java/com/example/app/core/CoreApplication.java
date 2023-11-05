@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 @SpringBootApplication
 @EnableR2dbcAuditing
 @Import({RestExceptionHandler.class, IdempotentController.class})
-@EnableR2dbcRepositories(basePackages = {"com.nantaaditya.framework.audit", "com.example.app.core"})
+@EnableR2dbcRepositories(basePackages = {"com.example.app.core"})
 @ComponentScan(value = {"com.example.app.*"})
 @OpenAPIDefinition(info =
   @Info(

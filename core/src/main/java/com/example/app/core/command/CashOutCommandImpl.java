@@ -6,6 +6,7 @@ import com.example.app.core.entity.BalanceHistory.BalanceAction;
 import com.example.app.core.entity.Member;
 import com.example.app.core.entity.Transaction;
 import com.example.app.core.entity.Transaction.TransactionType;
+import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
@@ -50,6 +51,8 @@ public class CashOutCommandImpl implements CashOutCommand {
 
   private final BalanceAuditService balanceAuditService;
 
+  private final KafkaPublisher kafkaPublisher;
+
   @Override
   public Mono<CashOutResponse> execute(CashOutRequest request) {
     return findMember(request)
@@ -65,9 +68,14 @@ public class CashOutCommandImpl implements CashOutCommand {
   private Mono<Tuple4<Member, Transaction, Balance, Balance>> saveTransaction(CashOutRequest request,
       Member member) {
     return findBalances(member)
-        .flatMap(balances -> saveBalancesAndTransaction(request, balances.getT1(), balances.getT2(), member)
+        .flatMap(balances ->
+            saveBalancesAndTransaction(request, balances.getT1(), balances.getT2(), member)
               .flatMap(tuple -> saveBalanceHistories(request, tuple.getT1(), tuple.getT2(), tuple.getT3(), member))
               .as(transactionalOperator::transactional)
+              .doOnSuccess(tuple -> {
+                kafkaPublisher.publishBalance(tuple.getT3());
+                kafkaPublisher.publishBalance(tuple.getT4());
+              })
         );
   }
 

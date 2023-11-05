@@ -64,6 +64,11 @@
       <version>${nanta-fw.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.nantaaditya</groupId>
+      <artifactId>nanta-framework-kafka</artifactId>
+      <version>${nanta-fw.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-webflux-ui</artifactId>
       <version>${openapi.version}</version>

@@ -2,7 +2,7 @@ server:
   port: 8001
 spring:
   profiles:
-    active: test
+    active: local
   application:
     name: core-app
   r2dbc:
@@ -45,8 +45,40 @@ metrics:
   timer:
     slow-response-threshold: 1000
 
+# reactor schedulers
 schedulers.configurations:
   changelog-schedulers:
     type: NEW_BOUNDED_ELASTIC
     new-bounded-elastic:
       name: changelog-schedulers
+  subscriber-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      name: subscriber-scheduler
+      core-pool-size: 4
+      queue-size: 10
+  publisher-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      core-pool-size: 4
+      queue-size: 10
+      name: publisher-scheduler
+
+# kafka
+reactor.kafka:
+  dbIdempotentFilterEnable: true
+  subscriber:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    groupId: core-app
+    schedulerConfiguration:
+      name: subscriber-scheduler
+    props:
+      "[auto.offset.reset]": latest
+  publisher:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    retry-configuration:
+      type: FIXED_DELAY
+    schedulerConfiguration:
+      name: publisher-scheduler
+      props:
+        acks: all

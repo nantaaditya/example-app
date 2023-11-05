@@ -29,6 +29,23 @@ services:
       PGADMIN_DEFAULT_PASSWORD: password
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=zookeeper
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=127.0.0.1
+      - KAFKA_ADVERTISED_PORT=9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+    depends_on:
+      - zookeeper
 
   # APP SERVICE
   member-service:
@@ -42,6 +59,7 @@ services:
     depends_on:
       - db
       - redis
+      - kafka
     ports:
       - "8000:8000"
   core-service:
@@ -53,6 +71,7 @@ services:
     depends_on:
       - db
       - member-service
+      - kafka
     ports:
       - "8001:8001"
 
@@ -75,6 +94,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     depends_on:
       - member-service
+      - core-service
   grafana:
     image: grafana/grafana
     container_name: grafana

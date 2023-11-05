@@ -3,16 +3,21 @@ server:
 spring:
   application:
     name: core-app
+  profiles:
+    active: ${SPRING_PROFILE:local}
   r2dbc:
 #    url: r2dbc:postgresql://host.docker.internal:5432/local_db
-    url: ${R2DBC_URL:r2dbc:postgresql://host.docker.internal:5432/local_db}
+    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/core_db}
     username: 'user'
     password: 'password'
-# logging
+  sleuth:
+    kafka:
+      enabled: true
 logging:
   level:
     com.nantaaditya.framework: DEBUG
     com.nantaaditya.framework.redis: DEBUG
+    com.nantaaditya.framework.kafka: DEBUG
     com.nantaaditya.framework.helper: INFO
   file:
     name: logs/core.log
@@ -59,3 +64,34 @@ schedulers.configurations:
     type: NEW_BOUNDED_ELASTIC
     new-bounded-elastic:
       name: changelog-schedulers
+  subscriber-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      name: subscriber-scheduler
+      core-pool-size: 4
+      queue-size: 10
+  publisher-scheduler:
+    type: NEW_BOUNDED_ELASTIC
+    new-bounded-elastic:
+      core-pool-size: 4
+      queue-size: 10
+      name: publisher-scheduler
+
+# kafka
+reactor.kafka:
+  dbIdempotentFilterEnable: true
+  subscriber:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    groupId: core-app
+    schedulerConfiguration:
+      name: subscriber-scheduler
+    props:
+      "[auto.offset.reset]": latest
+  publisher:
+    host: ${KAFKA_HOST:http://localhost:9092}
+    retry-configuration:
+      type: FIXED_DELAY
+    schedulerConfiguration:
+      name: publisher-scheduler
+      props:
+        acks: all

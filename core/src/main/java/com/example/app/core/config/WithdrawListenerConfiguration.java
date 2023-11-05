@@ -3,6 +3,7 @@ package com.example.app.core.config;
 import com.example.app.core.entity.Balance;
 import com.example.app.core.entity.BalanceHistory;
 import com.example.app.core.entity.BalanceHistory.BalanceAction;
+import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.utils.BalanceAuditService;
@@ -37,6 +38,9 @@ public class WithdrawListenerConfiguration {
   @Autowired
   private BalanceAuditService balanceAuditService;
 
+  @Autowired
+  private KafkaPublisher kafkaPublisher;
+
   @Bean
   public Sinks.Many<WithdrawEvent> withdrawEvents() {
     return Sinks.many().replay().all(SINKS_SIZE);
@@ -54,9 +58,10 @@ public class WithdrawListenerConfiguration {
             saveBalanceAndAudit(tuple.getT1(), tuple.getT2()),
             balanceHistoryRepository.save(toBalanceHistory(tuple.getT1(), tuple.getT2()))
         ))
-        .doOnNext(tuple ->
-          log.info("withdraw balance {} & balance history", tuple.getT1(), tuple.getT2())
-        )
+        .doOnNext(tuple -> {
+          log.info("withdraw balance {} & balance history {}", tuple.getT1(), tuple.getT2());
+          kafkaPublisher.publishBalance(tuple.getT1());
+        })
         .subscribe();
   }
 

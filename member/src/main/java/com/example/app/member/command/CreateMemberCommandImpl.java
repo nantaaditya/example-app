@@ -2,6 +2,7 @@ package com.example.app.member.command;
 
 import com.example.app.member.entity.Balance;
 import com.example.app.member.entity.Member;
+import com.example.app.member.helper.KafkaPublisher;
 import com.example.app.member.repository.BalanceRepository;
 import com.example.app.member.repository.MemberRepository;
 import com.example.app.shared.constant.BalanceType;
@@ -23,6 +24,9 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class CreateMemberCommandImpl implements CreateMemberCommand {
+
+  private final KafkaPublisher kafkaPublisher;
+
   private final MemberRepository memberRepository;
 
   private final BalanceRepository balanceRepository;
@@ -38,7 +42,9 @@ public class CreateMemberCommandImpl implements CreateMemberCommand {
     return memberRepository.save(toMember(request))
         .flatMap(this::createBalance)
         .as(transactionalOperator::transactional)
-        .doOnSuccess(this::saveToRedis);
+        .doOnSuccess(this::saveToRedis)
+        .doOnSuccess(kafkaPublisher::publishMember)
+        .doOnSuccess(kafkaPublisher::publishBalance);
   }
 
   private Member toMember(CreateMemberRequest request) {
@@ -86,4 +92,5 @@ public class CreateMemberCommandImpl implements CreateMemberCommand {
     repository.save(memberResponse.getId(), memberResponse, Duration.ofMinutes(5))
         .subscribe();
   }
+
 }

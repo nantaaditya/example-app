@@ -3,11 +3,14 @@ package com.example.app.core.entity;
 
 import com.example.app.shared.base.BaseEntity;
 import com.example.app.shared.constant.BalanceType;
+import com.example.app.shared.model.kafka.CreateBalanceEvent;
+import com.nantaaditya.framework.helper.json.JsonHelper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.relational.core.mapping.Table;
+import reactor.kafka.receiver.ReceiverRecord;
 
 @Data
 @SuperBuilder
@@ -28,5 +31,15 @@ public class Balance extends BaseEntity {
 
   public void decreaseBalance(long debitAmount) {
     this.amount -= debitAmount;
+  }
+
+  public static Balance from(ReceiverRecord<String, String> balanceEvent, JsonHelper jsonHelper) {
+    CreateBalanceEvent event = jsonHelper.fromJson(balanceEvent.value(), CreateBalanceEvent.class);
+    return Balance.builder()
+        .id(balanceEvent.key())
+        .memberId(event.getMemberId())
+        .type(BalanceType.of(event.getType()))
+        .amount(event.getAmount())
+        .build();
   }
 }
