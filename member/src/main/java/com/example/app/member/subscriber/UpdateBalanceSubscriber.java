@@ -47,7 +47,7 @@ public class UpdateBalanceSubscriber extends SubscriberService {
   protected Mono<ReceiverRecord<String, String>> handleEvent(
       ReceiverRecord<String, String> kafkaRecord) {
     return Mono.fromSupplier(() -> Balance.from(kafkaRecord, jsonHelper))
-        .flatMap(updatedBalance -> updateBalance(updatedBalance))
+        .flatMap(this::updateBalance)
         .map(result -> kafkaRecord)
         .defaultIfEmpty(kafkaRecord);
   }
@@ -62,8 +62,12 @@ public class UpdateBalanceSubscriber extends SubscriberService {
   private Mono<Balance> updateBalance(Balance updatedBalance) {
     return balanceRepository.findById(updatedBalance.getId())
         .filter(Objects::nonNull)
+        // handle out of order event
+        .filter(existingBalance -> existingBalance.getModifiedTime() < updatedBalance.getModifiedTime())
         .map(existingBalance -> {
           existingBalance.setAmount(updatedBalance.getAmount());
+          existingBalance.setModifiedBy(updatedBalance.getModifiedBy());
+          existingBalance.setModifiedTime(updatedBalance.getModifiedTime());
           return existingBalance;
         })
         .flatMap(balance -> balanceRepository.save(balance));

@@ -35,14 +35,12 @@ public class CreateMemberCommandImpl implements CreateMemberCommand {
 
   private final TransactionalOperator transactionalOperator;
 
-  private static final long DEFAULT_BALANCE = 0l;
-
   @Override
   public Mono<CreateMemberResponse> execute(CreateMemberRequest request) {
     return memberRepository.save(toMember(request))
         .flatMap(this::createBalance)
         .as(transactionalOperator::transactional)
-        .doOnSuccess(this::saveToRedis)
+        .flatMap(this::saveToRedis)
         .doOnSuccess(kafkaPublisher::publishMember)
         .doOnSuccess(kafkaPublisher::publishBalance);
   }
@@ -55,21 +53,12 @@ public class CreateMemberCommandImpl implements CreateMemberCommand {
 
   private Mono<CreateMemberResponse> createBalance(Member member) {
     return Mono.zip(
-        balanceRepository.save(toBalance(member, BalanceType.TOPUP_BALANCE)),
-        balanceRepository.save(toBalance(member, BalanceType.CASHOUT_BALANCE)),
-        balanceRepository.save(toBalance(member, BalanceType.CASHBACK_BALANCE))
+        balanceRepository.save(Balance.from(member, BalanceType.TOPUP_BALANCE)),
+        balanceRepository.save(Balance.from(member, BalanceType.CASHOUT_BALANCE)),
+        balanceRepository.save(Balance.from(member, BalanceType.CASHBACK_BALANCE))
     )
         .map(result -> List.of(result.getT1(), result.getT2(), result.getT3()))
         .map(result -> toResponse(member, result));
-  }
-
-  private Balance toBalance(Member member, BalanceType type) {
-    return Balance.builder()
-        .id(IdentifierGenerator.generateId())
-        .memberId(member.getId())
-        .amount(DEFAULT_BALANCE)
-        .type(type)
-        .build();
   }
 
   private CreateMemberResponse toResponse(Member member, List<Balance> balances) {
@@ -87,10 +76,10 @@ public class CreateMemberCommandImpl implements CreateMemberCommand {
         .build();
   }
 
-  private void saveToRedis(CreateMemberResponse response) {
+  private Mono<CreateMemberResponse> saveToRedis(CreateMemberResponse response) {
     MemberResponse memberResponse = response.getMember();
-    repository.save(memberResponse.getId(), memberResponse, Duration.ofMinutes(5))
-        .subscribe();
+    return repository.save(memberResponse.getId(), memberResponse, Duration.ofMinutes(5))
+        .map(result -> response);
   }
 
 }

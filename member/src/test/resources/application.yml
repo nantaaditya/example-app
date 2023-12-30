@@ -13,7 +13,6 @@ spring:
     name: member-app
   r2dbc:
     url: r2dbc:h2:mem:///memberdb
-    initialization-mode:
     username: 'sa'
     password: ''
 # logging
@@ -50,12 +49,6 @@ rest-log:
       - /webjars/**
 server:
   port: 8000
-
-# kafka
-reactor:
-  kafka:
-    publisher:
-      host: http://localhost:9092
 
 # schedulers
 schedulers.configurations:

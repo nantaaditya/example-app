@@ -1,6 +1,5 @@
 package com.example.app.member.helper;
 
-import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.kafka.CreateBalanceEvent;
 import com.example.app.shared.model.kafka.CreateMemberEvent;
 import com.example.app.shared.model.kafka.KafkaTopic;
@@ -16,6 +15,7 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.common.header.Header;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
 @Component
 @RequiredArgsConstructor
@@ -28,7 +28,8 @@ public class KafkaPublisher {
   public void publishMember(CreateMemberResponse response) {
     CreateMemberEvent event = ConverterHelper.copy(response.getMember(), CreateMemberEvent::new);
     Set<Header> headers = new HashSet<>();
-    headers.add(KafkaHeaderUtil.createHeader("key", event.getId()));
+    headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.KEY, event.getId()));
+    headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.UNIQUE_ID, event.getId()));
 
     publisherService.send(
             KafkaTopic.CREATE_MEMBER,
@@ -43,20 +44,16 @@ public class KafkaPublisher {
     List<CreateBalanceEvent> events = ConverterHelper.copy(response.getBalances(), CreateBalanceEvent::new);
     Set<Header> headers = new HashSet<>();
 
-    for (CreateBalanceEvent event : events) {
-      headers.clear();
-      headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.KEY, event.getId()));
-      headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.UNIQUE_ID, IdentifierGenerator.generateId()));
+    Flux.fromIterable(events)
+        .map(event -> {
+          headers.clear();
+          headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.KEY, event.getId()));
+          headers.add(KafkaHeaderUtil.createHeader(KafkaHeader.UNIQUE_ID, event.getUniqueId()));
 
-      event.setMemberId(response.getMember().getId());
-
-      publisherService.send(
-              KafkaTopic.CREATE_BALANCE,
-              null,
-              jsonHelper.toJson(event),
-              headers
-          )
-          .subscribe();
-    }
+          event.setMemberId(response.getMember().getId());
+          return event;
+        })
+        .flatMap(event -> publisherService.send(KafkaTopic.CREATE_BALANCE, null, jsonHelper.toJson(event), headers))
+        .subscribe();
   }
 }

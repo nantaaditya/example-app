@@ -1,5 +1,7 @@
 package com.example.app.shared.model.kafka;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.beans.Transient;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -23,4 +25,10 @@ public class CreateBalanceEvent {
   private long amount;
 
   private String type;
+
+  @Transient
+  @JsonIgnore
+  public String getUniqueId() {
+    return this.id + "_" + this.type;
+  }
 }
