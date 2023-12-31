@@ -100,8 +100,8 @@ public class CashOutCommandImpl implements CashOutCommand {
       CashOutRequest request, Balance topUpBalance, Balance cashOutBalance, Transaction transaction,
       Member member) {
     return Mono.zip(
-        balanceHistoryRepository.save(BalanceHistory.from(member, transaction, request.getAmount(), topUpBalance.getType(), BalanceAction.DEBIT)),
-        balanceHistoryRepository.save(BalanceHistory.from(member, transaction, request.getAmount(), cashOutBalance.getType(), BalanceAction.CREDIT))
+        balanceHistoryRepository.save(BalanceHistory.from(member.getId(), transaction.getId(), request.getAmount(), topUpBalance.getType(), BalanceAction.DEBIT)),
+        balanceHistoryRepository.save(BalanceHistory.from(member.getId(), transaction.getId(), request.getAmount(), cashOutBalance.getType(), BalanceAction.CREDIT))
     )
         .map(tuple -> Tuples.of(member, transaction, topUpBalance, cashOutBalance));
   }

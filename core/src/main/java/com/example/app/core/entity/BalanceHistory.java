@@ -19,15 +19,15 @@ public class BalanceHistory extends BaseEntity {
   private long amount;
   private BalanceAction action;
 
-  public static BalanceHistory from(Member member, Transaction transaction, long amount,
+  public static BalanceHistory from(String memberId, String transactionId, long amount,
       BalanceType balanceType, BalanceAction action) {
     return BalanceHistory.builder()
         .id(IdentifierGenerator.generateId())
-        .memberId(member.getId())
+        .memberId(memberId)
         .amount(amount)
         .type(balanceType)
         .action(action)
-        .transactionId(transaction.getId())
+        .transactionId(transactionId)
         .build();
   }
 }

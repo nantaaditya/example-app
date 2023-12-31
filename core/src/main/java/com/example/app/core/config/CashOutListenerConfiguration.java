@@ -6,11 +6,10 @@ import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.utils.BalanceAuditService;
+import com.example.app.core.utils.DtoConverter;
 import com.example.app.shared.constant.BalanceAction;
 import com.example.app.shared.constant.BalanceType;
-import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
-import com.nantaaditya.framework.audit.model.request.AuditRequest;
 import java.time.Duration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ import reactor.util.function.Tuples;
 
 @Slf4j
 @Configuration
-public class WithdrawListenerConfiguration {
+public class CashOutListenerConfiguration {
 
   private static final int SINKS_SIZE = 100;
 
@@ -50,14 +49,22 @@ public class WithdrawListenerConfiguration {
   public Disposable withdrawListener() {
     return withdrawEvents().asFlux()
         .doOnNext(event -> log.info("event consumer {}", event))
-        .delayElements(Duration.ofSeconds(10))
+        .delayElements(Duration.ofSeconds(10)) // simulate delay cash out
         .flatMap(event -> balanceRepository.findByTypeAndMemberId(BalanceType.CASHOUT_BALANCE, event.memberId())
             .map(balance -> Tuples.of(event, balance))
         )
-        .flatMap(tuple -> Mono.zip(
-            saveBalanceAndAudit(tuple.getT1(), tuple.getT2()),
-            balanceHistoryRepository.save(toBalanceHistory(tuple.getT1(), tuple.getT2()))
-        ))
+        .flatMap(tuple -> {
+          WithdrawEvent event = tuple.getT1();
+          Balance balance = tuple.getT2();
+          return Mono.zip(
+              saveBalanceAndAudit(tuple.getT1(), tuple.getT2()),
+              balanceHistoryRepository.save(
+                  BalanceHistory.from(event.memberId(), event.transactionId(), event.transactionAmount(),
+                      balance.getType(), BalanceAction.DEBIT
+                  )
+              )
+          );
+        })
         .doOnNext(tuple -> {
           log.info("withdraw balance {} & balance history {}", tuple.getT1(), tuple.getT2());
           kafkaPublisher.publishBalance(tuple.getT1());
@@ -66,28 +73,8 @@ public class WithdrawListenerConfiguration {
   }
 
   private Mono<Balance> saveBalanceAndAudit(WithdrawEvent event, Balance balance) {
-    return balanceAuditService.save(new AuditRequest<>(
-        balance.getId(),
-        balance.getModifiedBy(),
-        balance.getModifiedTime(),
-        "withdraw",
-        updateBalance(event, balance)
-    ));
-  }
-
-  private Balance updateBalance(WithdrawEvent event, Balance balance) {
-    balance.decreaseBalance(event.transactionAmount());
-    return balance;
-  }
-
-  private BalanceHistory toBalanceHistory(WithdrawEvent event, Balance balance) {
-    return BalanceHistory.builder()
-        .id(IdentifierGenerator.generateId())
-        .memberId(event.memberId())
-        .amount(event.transactionAmount())
-        .type(balance.getType())
-        .action(BalanceAction.DEBIT)
-        .transactionId(event.transactionId())
-        .build();
+    return balanceAuditService.save(
+        DtoConverter.toAuditRequest(event.transactionAmount(), balance, "cashout",'-')
+    );
   }
 }

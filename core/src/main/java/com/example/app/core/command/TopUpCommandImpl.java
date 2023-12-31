@@ -89,7 +89,7 @@ public class TopUpCommandImpl implements TopUpCommand {
         Tuples::of
     )
         .flatMap(tuples -> balanceHistoryRepository.save(BalanceHistory.from(
-              member, tuples.getT2(), request.getAmount(), tuples.getT1().getType(), BalanceAction.CREDIT)
+              member.getId(), tuples.getT2().getId(), request.getAmount(), tuples.getT1().getType(), BalanceAction.CREDIT)
             )
             .map(balanceHistory -> Tuples.of(member, tuples.getT1()))
         )
