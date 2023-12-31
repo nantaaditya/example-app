@@ -40,6 +40,10 @@ public class Balance extends BaseEntity {
         .memberId(event.getMemberId())
         .type(BalanceType.of(event.getType()))
         .amount(event.getAmount())
+        .createdBy(event.getCreatedBy())
+        .createdTime(event.getCreatedTime())
+        .modifiedBy(event.getModifiedBy())
+        .modifiedTime(event.getModifiedTime())
         .build();
   }
 }

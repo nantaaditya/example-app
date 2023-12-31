@@ -2,11 +2,11 @@ package com.example.app.core.config;
 
 import com.example.app.core.entity.Balance;
 import com.example.app.core.entity.BalanceHistory;
-import com.example.app.core.entity.BalanceHistory.BalanceAction;
 import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.utils.BalanceAuditService;
+import com.example.app.shared.constant.BalanceAction;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;

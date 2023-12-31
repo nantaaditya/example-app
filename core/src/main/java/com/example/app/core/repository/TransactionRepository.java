@@ -1,7 +1,7 @@
 package com.example.app.core.repository;
 
 import com.example.app.core.entity.Transaction;
-import com.example.app.core.entity.Transaction.TransactionType;
+import com.example.app.shared.constant.TransactionType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface TransactionRepository extends R2dbcRepository<Transaction, String> {
-  Mono<Boolean> existsByTypeAndReferenceId(TransactionType type, String referenceId);
 
   default Flux<Transaction> findTransactions(String memberId, TransactionType type, Pageable pageable) {
     if (type == null) {
