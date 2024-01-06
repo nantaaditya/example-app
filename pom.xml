@@ -130,7 +130,7 @@
     </repository>
     <repository>
       <id>github</id>
-      <url>https://nantaaditya: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@maven.pkg.github.com/nantaaditya/nanta-framework</url>
+      <url>https://nantaaditya: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@maven.pkg.github.com/nantaaditya/nanta-framework</url>
     </repository>
   </repositories>
 
