@@ -2,20 +2,25 @@ package com.example.app.member.command;
 
 import com.example.app.member.entity.Balance;
 import com.example.app.member.entity.Member;
-import com.example.app.member.helper.KafkaPublisher;
 import com.example.app.member.repository.BalanceRepository;
 import com.example.app.member.repository.MemberRepository;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.helper.IdentifierGenerator;
+import com.example.app.shared.model.kafka.CreateBalanceEvent;
+import com.example.app.shared.model.kafka.CreateMemberEvent;
+import com.example.app.shared.model.kafka.KafkaTopic;
 import com.example.app.shared.request.CreateMemberRequest;
 import com.example.app.shared.response.CreateMemberResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
 import com.example.app.shared.response.embedded.MemberResponse;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
+import com.nantaaditya.framework.kafka.model.dto.OutboxDTO;
+import com.nantaaditya.framework.kafka.service.OutboxService;
 import com.nantaaditya.framework.redis.api.RedisRepository;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -25,37 +30,48 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class CreateMemberCommandImpl implements CreateMemberCommand {
 
-  private final KafkaPublisher kafkaPublisher;
+  private final OutboxService<MemberRepository, Member, String, CreateMemberEvent> memberOutboxService;
 
-  private final MemberRepository memberRepository;
-
-  private final BalanceRepository balanceRepository;
+  private final OutboxService<BalanceRepository, Balance, String, CreateBalanceEvent> balanceOutboxService;
 
   private final RedisRepository repository;
 
   private final TransactionalOperator transactionalOperator;
 
+  private String memberId = null;
+
+  private Function<Member, OutboxDTO<CreateMemberEvent>> memberFunction = (member) -> {
+    CreateMemberEvent createMemberEvent = ConverterHelper.copy(member, CreateMemberEvent::new);
+    return OutboxDTO.create(KafkaTopic.CREATE_MEMBER, createMemberEvent.getId(), createMemberEvent.getId(), createMemberEvent);
+  };
+
+  private Function<Balance, OutboxDTO<CreateBalanceEvent>> balanceFunction = (balance) -> {
+    CreateBalanceEvent createBalanceEvent = ConverterHelper.copy(balance, CreateBalanceEvent::new);
+    createBalanceEvent.setMemberId(memberId);
+    createBalanceEvent.setType(balance.getType().name());
+    return OutboxDTO.create(KafkaTopic.CREATE_BALANCE, createBalanceEvent.getUniqueId(), createBalanceEvent.getId(), createBalanceEvent);
+  };
+
   @Override
   public Mono<CreateMemberResponse> execute(CreateMemberRequest request) {
-    return memberRepository.save(toMember(request))
+    return memberOutboxService.save(toMember(request), memberFunction)
         .flatMap(this::createBalance)
         .as(transactionalOperator::transactional)
-        .flatMap(this::saveToRedis)
-        .doOnSuccess(kafkaPublisher::publishMember)
-        .doOnSuccess(kafkaPublisher::publishBalance);
+        .flatMap(this::saveToRedis);
   }
 
   private Member toMember(CreateMemberRequest request) {
     Member member = ConverterHelper.copy(request, Member::new);
     member.setId(IdentifierGenerator.generateId());
+    memberId = member.getId();
     return member;
   }
 
   private Mono<CreateMemberResponse> createBalance(Member member) {
     return Mono.zip(
-        balanceRepository.save(Balance.from(member, BalanceType.TOPUP_BALANCE)),
-        balanceRepository.save(Balance.from(member, BalanceType.CASHOUT_BALANCE)),
-        balanceRepository.save(Balance.from(member, BalanceType.CASHBACK_BALANCE))
+        balanceOutboxService.save(Balance.from(member, BalanceType.TOPUP_BALANCE), balanceFunction),
+        balanceOutboxService.save(Balance.from(member, BalanceType.CASHOUT_BALANCE), balanceFunction),
+        balanceOutboxService.save(Balance.from(member, BalanceType.CASHBACK_BALANCE), balanceFunction)
     )
         .map(result -> List.of(result.getT1(), result.getT2(), result.getT3()))
         .map(result -> toResponse(member, result));

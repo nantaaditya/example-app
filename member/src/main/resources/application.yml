@@ -99,3 +99,6 @@ reactor.kafka:
       name: publisher-scheduler
       props:
         acks: all
+kafka:
+  outbox:
+    enable: true
