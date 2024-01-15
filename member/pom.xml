@@ -33,6 +33,25 @@
       <artifactId>loki-logback-appender</artifactId>
       <version>${loki.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>r2dbc</artifactId>
+      <version>${testcontainer.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${testcontainer.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${testcontainer.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

@@ -24,7 +24,7 @@ rest-log:
   ignored-paths:
     GET:
       - /webjars/**
-
+# test
 test.rest:
   enable: true
   baseUrl: http://localhost:8001
@@ -82,3 +82,10 @@ reactor.kafka:
       name: publisher-scheduler
       props:
         acks: all
+kafka:
+  outbox.enable: true
+  inbox:
+    enable: true
+    topics:
+      - create_member
+      - create_balance

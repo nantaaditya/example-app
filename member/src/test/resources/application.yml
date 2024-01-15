@@ -1,20 +1,12 @@
-test.rest:
-  enable: true
-  baseUrl: http://localhost:8000
-  defaultHeaders:
-    Content-Type:
-      - application/json
-    Accept:
-      - application/json
+server:
+  port: 8000
 spring:
   profiles:
     active: local
   application:
     name: member-app
   r2dbc:
-    url: r2dbc:h2:mem:///memberdb
-    username: 'sa'
-    password: ''
+    url: r2dbc:tc:postgresql:///testdb?TC_IMAGE_TAG=14-alpine
 # logging
 logging:
   level:
@@ -34,6 +26,15 @@ command:
       getMemberCommandImpl:
         - beanName: commandCacheInterceptor
           action: AFTER_SUCCESS
+# test
+test.rest:
+  enable: true
+  baseUrl: http://localhost:8000
+  defaultHeaders:
+    Content-Type:
+      - application/json
+    Accept:
+      - application/json
 # rest
 rest-log:
   enable: true
@@ -47,9 +48,6 @@ rest-log:
   ignored-paths:
     GET:
       - /webjars/**
-server:
-  port: 8000
-
 # schedulers
 schedulers.configurations:
   publisher-scheduler:
@@ -83,3 +81,9 @@ reactor.kafka:
       name: publisher-scheduler
       props:
         acks: all
+kafka:
+  outbox.enable: true
+  inbox:
+    enable: true
+    topics:
+      - update_balance
