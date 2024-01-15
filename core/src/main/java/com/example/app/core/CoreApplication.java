@@ -3,6 +3,7 @@ package com.example.app.core;
 import com.example.app.shared.configuration.DBInitialization;
 import com.nantaaditya.framework.audit.api.IdempotentController;
 import com.nantaaditya.framework.kafka.api.KafkaInboxController;
+import com.nantaaditya.framework.kafka.api.KafkaOutboxController;
 import com.nantaaditya.framework.rest.handler.RestExceptionHandler;
 import io.r2dbc.spi.ConnectionFactory;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -21,7 +22,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 @EnableR2dbcAuditing
-@Import({RestExceptionHandler.class, IdempotentController.class, KafkaInboxController.class})
+@Import({RestExceptionHandler.class, IdempotentController.class, KafkaInboxController.class, KafkaOutboxController.class})
 @EnableR2dbcRepositories(basePackages = {"com.example.app.core"})
 @ComponentScan(value = {"com.example.app.*"})
 @OpenAPIDefinition(info =

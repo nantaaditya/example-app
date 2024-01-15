@@ -96,6 +96,7 @@ reactor.kafka:
       props:
         acks: all
 kafka:
+  outbox.enable: true
   inbox:
     enable: true
     topics:

@@ -4,7 +4,6 @@ import com.example.app.core.entity.Balance;
 import com.example.app.core.entity.BalanceHistory;
 import com.example.app.core.entity.Member;
 import com.example.app.core.entity.Transaction;
-import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
@@ -13,9 +12,16 @@ import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.core.utils.DtoConverter;
 import com.example.app.shared.constant.BalanceAction;
 import com.example.app.shared.constant.BalanceType;
+import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
+import com.example.app.shared.model.kafka.KafkaTopic;
+import com.example.app.shared.model.kafka.UpdateBalanceEvent;
 import com.example.app.shared.request.CashOutRequest;
 import com.example.app.shared.response.CashOutResponse;
+import com.nantaaditya.framework.helper.converter.ConverterHelper;
+import com.nantaaditya.framework.kafka.model.dto.OutboxDTO;
+import com.nantaaditya.framework.kafka.service.OutboxService;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,7 +52,14 @@ public class CashOutCommandImpl implements CashOutCommand {
 
   private final BalanceAuditService balanceAuditService;
 
-  private final KafkaPublisher kafkaPublisher;
+  private final OutboxService<BalanceRepository, Balance, String, UpdateBalanceEvent> balanceOutboxService;
+
+  private Function<Balance, OutboxDTO<UpdateBalanceEvent>> function = (balance) -> {
+    UpdateBalanceEvent updateBalanceEvent = ConverterHelper.copy(balance, UpdateBalanceEvent::new);
+    updateBalanceEvent.setType(balance.getType().name());
+
+    return OutboxDTO.create(KafkaTopic.UPDATE_BALANCE, IdentifierGenerator.generateId(), updateBalanceEvent.getId(), updateBalanceEvent);
+  };
 
   @Override
   public Mono<CashOutResponse> execute(CashOutRequest request) {
@@ -67,10 +80,6 @@ public class CashOutCommandImpl implements CashOutCommand {
             saveBalancesAndTransaction(request, balances.getT1(), balances.getT2(), member)
               .flatMap(tuple -> saveBalanceHistories(request, tuple.getT1(), tuple.getT2(), tuple.getT3(), member))
               .as(transactionalOperator::transactional)
-              .doOnSuccess(tuple -> {
-                kafkaPublisher.publishBalance(tuple.getT3());
-                kafkaPublisher.publishBalance(tuple.getT4());
-              })
         );
   }
 
@@ -93,7 +102,8 @@ public class CashOutCommandImpl implements CashOutCommand {
 
   private Mono<Balance> saveBalanceAndAudit(CashOutRequest request, Balance balance, char operator) {
     return balanceAuditService.save(DtoConverter.toAuditRequest(request.getAmount(), balance,
-        '+' == operator ? "topup" : "cashout", operator));
+        '+' == operator ? "topup" : "cashout", operator))
+        .flatMap(b -> balanceOutboxService.save(b, function));
   }
 
   private Mono<Tuple4<Member, Transaction, Balance, Balance>> saveBalanceHistories(

@@ -4,7 +4,6 @@ import com.example.app.core.entity.Balance;
 import com.example.app.core.entity.BalanceHistory;
 import com.example.app.core.entity.Member;
 import com.example.app.core.entity.Transaction;
-import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.repository.MemberRepository;
@@ -13,14 +12,21 @@ import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.core.utils.DtoConverter;
 import com.example.app.shared.constant.BalanceAction;
 import com.example.app.shared.constant.BalanceType;
+import com.example.app.shared.helper.IdentifierGenerator;
+import com.example.app.shared.model.kafka.KafkaTopic;
+import com.example.app.shared.model.kafka.UpdateBalanceEvent;
 import com.example.app.shared.request.TopUpRequest;
 import com.example.app.shared.response.TopUpResponse;
 import com.nantaaditya.framework.audit.model.eventbus.IdempotentRecord;
 import com.nantaaditya.framework.audit.service.IdempotentRecordPublisher;
 import com.nantaaditya.framework.audit.service.impl.IdempotentCheckExecutor;
+import com.nantaaditya.framework.helper.converter.ConverterHelper;
 import com.nantaaditya.framework.helper.json.JsonHelper;
+import com.nantaaditya.framework.kafka.model.dto.OutboxDTO;
+import com.nantaaditya.framework.kafka.service.OutboxService;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -50,9 +56,16 @@ public class TopUpCommandImpl implements TopUpCommand {
 
   private final BalanceAuditService balanceAuditService;
 
-  private final KafkaPublisher kafkaPublisher;
+  private final OutboxService<BalanceRepository, Balance, String, UpdateBalanceEvent> balanceOutboxService;
 
   private Map<String, String> idempotentRequest = new HashMap<>();
+
+  private Function<Balance, OutboxDTO<UpdateBalanceEvent>> function = (balance) -> {
+    UpdateBalanceEvent updateBalanceEvent = ConverterHelper.copy(balance, UpdateBalanceEvent::new);
+    updateBalanceEvent.setType(balance.getType().name());
+
+    return OutboxDTO.create(KafkaTopic.UPDATE_BALANCE, IdentifierGenerator.generateId(), updateBalanceEvent.getId(), updateBalanceEvent);
+  };
 
   @Override
   public Mono<TopUpResponse> execute(TopUpRequest request) {
@@ -93,12 +106,12 @@ public class TopUpCommandImpl implements TopUpCommand {
             )
             .map(balanceHistory -> Tuples.of(member, tuples.getT1()))
         )
-        .as(transactionalOperator::transactional)
-        .doOnSuccess(tuple -> kafkaPublisher.publishBalance(tuple.getT2()));
+        .as(transactionalOperator::transactional);
   }
 
   private Mono<Balance> saveBalanceAndAudit(TopUpRequest request, Balance balance) {
-    return balanceAuditService.save(DtoConverter.toAuditRequest(request.getAmount(), balance, "topup", '+'));
+    return balanceAuditService.save(DtoConverter.toAuditRequest(request.getAmount(), balance, "topup", '+'))
+        .flatMap(b -> balanceOutboxService.save(b, function));
   }
 
 }

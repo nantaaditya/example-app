@@ -2,15 +2,21 @@ package com.example.app.core.config;
 
 import com.example.app.core.entity.Balance;
 import com.example.app.core.entity.BalanceHistory;
-import com.example.app.core.helper.KafkaPublisher;
 import com.example.app.core.repository.BalanceHistoryRepository;
 import com.example.app.core.repository.BalanceRepository;
 import com.example.app.core.utils.BalanceAuditService;
 import com.example.app.core.utils.DtoConverter;
 import com.example.app.shared.constant.BalanceAction;
 import com.example.app.shared.constant.BalanceType;
+import com.example.app.shared.helper.IdentifierGenerator;
 import com.example.app.shared.model.event.WithdrawEvent;
+import com.example.app.shared.model.kafka.KafkaTopic;
+import com.example.app.shared.model.kafka.UpdateBalanceEvent;
+import com.nantaaditya.framework.helper.converter.ConverterHelper;
+import com.nantaaditya.framework.kafka.model.dto.OutboxDTO;
+import com.nantaaditya.framework.kafka.service.OutboxService;
 import java.time.Duration;
+import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -38,7 +44,14 @@ public class CashOutListenerConfiguration {
   private BalanceAuditService balanceAuditService;
 
   @Autowired
-  private KafkaPublisher kafkaPublisher;
+  private OutboxService<BalanceRepository, Balance, String, UpdateBalanceEvent> balanceOutboxService;
+
+  private Function<Balance, OutboxDTO<UpdateBalanceEvent>> function = (balance) -> {
+    UpdateBalanceEvent updateBalanceEvent = ConverterHelper.copy(balance, UpdateBalanceEvent::new);
+    updateBalanceEvent.setType(balance.getType().name());
+
+    return OutboxDTO.create(KafkaTopic.UPDATE_BALANCE, IdentifierGenerator.generateId(), updateBalanceEvent.getId(), updateBalanceEvent);
+  };
 
   @Bean
   public Sinks.Many<WithdrawEvent> withdrawEvents() {
@@ -65,16 +78,13 @@ public class CashOutListenerConfiguration {
               )
           );
         })
-        .doOnNext(tuple -> {
-          log.info("withdraw balance {} & balance history {}", tuple.getT1(), tuple.getT2());
-          kafkaPublisher.publishBalance(tuple.getT1());
-        })
         .subscribe();
   }
 
   private Mono<Balance> saveBalanceAndAudit(WithdrawEvent event, Balance balance) {
     return balanceAuditService.save(
         DtoConverter.toAuditRequest(event.transactionAmount(), balance, "cashout",'-')
-    );
+    )
+        .flatMap(b -> balanceOutboxService.save(b, function));
   }
 }
