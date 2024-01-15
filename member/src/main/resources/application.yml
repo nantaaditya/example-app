@@ -100,5 +100,8 @@ reactor.kafka:
       props:
         acks: all
 kafka:
-  outbox:
+  outbox.enable: true
+  inbox:
     enable: true
+    topics:
+      - update_balance
