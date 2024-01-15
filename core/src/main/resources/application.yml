@@ -95,3 +95,9 @@ reactor.kafka:
       name: publisher-scheduler
       props:
         acks: all
+kafka:
+  inbox:
+    enable: true
+    topics:
+      - create_member
+      - create_balance

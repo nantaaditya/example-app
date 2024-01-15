@@ -4,13 +4,12 @@ package com.example.app.core.entity;
 import com.example.app.shared.base.BaseEntity;
 import com.example.app.shared.constant.BalanceType;
 import com.example.app.shared.model.kafka.CreateBalanceEvent;
-import com.nantaaditya.framework.helper.json.JsonHelper;
+import com.nantaaditya.framework.helper.converter.ConverterHelper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.relational.core.mapping.Table;
-import reactor.kafka.receiver.ReceiverRecord;
 
 @Data
 @SuperBuilder
@@ -33,17 +32,10 @@ public class Balance extends BaseEntity {
     this.amount -= debitAmount;
   }
 
-  public static Balance from(ReceiverRecord<String, String> balanceEvent, JsonHelper jsonHelper) {
-    CreateBalanceEvent event = jsonHelper.fromJson(balanceEvent.value(), CreateBalanceEvent.class);
-    return Balance.builder()
-        .id(balanceEvent.key())
-        .memberId(event.getMemberId())
-        .type(BalanceType.of(event.getType()))
-        .amount(event.getAmount())
-        .createdBy(event.getCreatedBy())
-        .createdTime(event.getCreatedTime())
-        .modifiedBy(event.getModifiedBy())
-        .modifiedTime(event.getModifiedTime())
-        .build();
+  public static Balance from(CreateBalanceEvent event) {
+    Balance balance = ConverterHelper.copy(event, Balance::new);
+    balance.setType(BalanceType.of(event.getType()));
+    balance.setVersion(0);
+    return balance;
   }
 }
