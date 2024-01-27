@@ -28,7 +28,7 @@
   <properties>
     <java.version>17</java.version>
     <loki.version>1.4.1</loki.version>
-    <nanta-fw.version>0.0.3-SNAPSHOT</nanta-fw.version>
+    <nanta-fw.version>0.0.3</nanta-fw.version>
     <openapi.version>1.6.8</openapi.version>
     <spring-cloud.version>2021.0.4</spring-cloud.version>
     <testcontainer.version>1.19.0</testcontainer.version>
@@ -125,7 +125,7 @@
     </repository>
     <repository>
       <id>github</id>
-      <url>https://nantaaditya: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@maven.pkg.github.com/nantaaditya/nanta-framework</url>
+      <url>https://nantaaditya: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@maven.pkg.github.com/nantaaditya/nanta-framework</url>
     </repository>
   </repositories>
 
