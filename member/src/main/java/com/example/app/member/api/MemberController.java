@@ -7,7 +7,7 @@ import com.example.app.shared.request.GetMemberRequest;
 import com.example.app.shared.response.CreateMemberResponse;
 import com.example.app.shared.response.embedded.MemberResponse;
 import com.nantaaditya.framework.command.executor.CommandExecutor;
-import com.nantaaditya.framework.rest.model.Response;
+import com.nantaaditya.framework.helper.model.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -12,7 +12,7 @@ import com.example.app.shared.response.CreateMemberResponse;
 import com.example.app.shared.response.embedded.BalanceResponse;
 import com.example.app.shared.response.embedded.MemberResponse;
 import com.nantaaditya.framework.helper.converter.ConverterHelper;
-import com.nantaaditya.framework.redis.api.RedisRepository;
+import com.nantaaditya.framework.redis.service.RedisRepository;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
