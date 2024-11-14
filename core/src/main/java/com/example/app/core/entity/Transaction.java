@@ -35,11 +35,11 @@ public class Transaction extends BaseEntity {
         .build();
   }
 
-  public static Transaction from(CashOutRequest request, Member member) {
+  public static Transaction from(CashOutRequest request, Member member, String referenceId) {
     return Transaction.builder()
         .id(IdentifierGenerator.generateId())
         .memberId(member.getId())
-        .referenceId(IdentifierGenerator.generateId())
+        .referenceId(referenceId)
         .amount(request.getAmount())
         .type(TransactionType.CASH_OUT)
         .build();

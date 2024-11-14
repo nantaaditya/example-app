@@ -5,10 +5,14 @@ import com.nantaaditya.framework.audit.api.IdempotentController;
 import com.nantaaditya.framework.kafka.api.KafkaInboxController;
 import com.nantaaditya.framework.kafka.api.KafkaOutboxController;
 import com.nantaaditya.framework.rest.handler.RestExceptionHandler;
+import com.nantaaditya.framework.workflow.api.WorkflowController;
+import com.nantaaditya.framework.workflow.api.WorkflowHistoryController;
+import com.nantaaditya.framework.workflow.api.WorkflowProcessorController;
 import io.r2dbc.spi.ConnectionFactory;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -20,9 +24,18 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @SpringBootApplication
 @EnableR2dbcAuditing
-@Import({RestExceptionHandler.class, IdempotentController.class, KafkaInboxController.class, KafkaOutboxController.class})
+@Import({
+    RestExceptionHandler.class,
+    IdempotentController.class,
+    KafkaInboxController.class,
+    KafkaOutboxController.class,
+    WorkflowController.class,
+    WorkflowHistoryController.class,
+    WorkflowProcessorController.class
+})
 @EnableR2dbcRepositories(basePackages = {"com.example.app.core"})
 @ComponentScan(value = {"com.example.app.*"})
 @OpenAPIDefinition(info =

@@ -1,7 +1,6 @@
 package com.example.app.core.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nantaaditya.framework.audit.configuration.PGStringToJsonConverter;
 import io.r2dbc.spi.ConnectionFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,6 @@ public class PGDatabaseConfiguration extends AbstractR2dbcConfiguration {
     List<Converter<?, ?>> converters = new ArrayList<>();
     converters.add(new PGJsonWriteConverter(objectMapper));
     converters.add(new PGJsonReadConverter(objectMapper));
-    converters.add(new PGStringToJsonConverter(objectMapper));
     return new R2dbcCustomConversions(getStoreConversions(), converters);
   }
 }

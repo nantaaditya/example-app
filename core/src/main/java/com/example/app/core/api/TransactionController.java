@@ -10,7 +10,7 @@ import com.example.app.shared.response.CashOutResponse;
 import com.example.app.shared.response.TopUpResponse;
 import com.example.app.shared.response.TransactionsResponse;
 import com.nantaaditya.framework.command.executor.CommandExecutor;
-import com.nantaaditya.framework.rest.model.Response;
+import com.nantaaditya.framework.helper.model.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;

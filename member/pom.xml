@@ -24,6 +24,11 @@
     </dependency>
     <dependency>
       <groupId>com.nantaaditya</groupId>
+      <artifactId>nanta-framework-redis</artifactId>
+      <version>${nanta-fw.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.nantaaditya</groupId>
       <artifactId>nanta-framework-test</artifactId>
       <version>${nanta-fw.version}</version>
     </dependency>

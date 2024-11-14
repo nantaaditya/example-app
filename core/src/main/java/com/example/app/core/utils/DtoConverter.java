@@ -61,8 +61,7 @@ public class DtoConverter {
         .build();
   }
 
-  public static CashOutResponse toCashOutResponse(Member member, Transaction transaction,
-      Balance topUpBalance, Balance withdrawBalance) {
+  public static CashOutResponse toCashOutResponse(Member member, Balance topUpBalance, Balance withdrawBalance, String referenceId) {
     BalanceResponse topUp = ConverterHelper.copy(topUpBalance, BalanceResponse::new);
     topUp.setType(topUpBalance.getType().toString());
     BalanceResponse withdraw = ConverterHelper.copy(withdrawBalance, BalanceResponse::new);
@@ -70,7 +69,7 @@ public class DtoConverter {
 
     return CashOutResponse.builder()
         .phoneNumber(member.getPhoneNumber())
-        .referenceId(transaction.getReferenceId())
+        .referenceId(referenceId)
         .balances(Map.of(
             "topUp", topUp,
             "cashOut", withdraw
